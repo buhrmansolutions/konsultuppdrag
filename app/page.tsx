@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getJobRequests } from "@/pages/api/job-requests";
 
 interface Assignment {
   id: number;
@@ -273,12 +274,7 @@ export default function Home() {
     // }
     setIsLoading(true);
     try {
-      const res = await fetch("/api/job-requests");
-      if (!res.ok) {
-        throw new Error("Failed to fetch assignments");
-      }
-      const data = await res.json();
-      console.log(data);
+      const data = await getJobRequests();
       setAssignments(data.content);
     } catch (error) {
       console.error("Error fetching assignments:", error);
