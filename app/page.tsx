@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -12,19 +12,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Heart } from "lucide-react";
 
 interface Assignment {
   id: number;
@@ -91,88 +85,15 @@ function SearchFilters({ onSearch }: { onSearch: (filters: any) => void }) {
   );
 }
 
-function ApplicationForm({ assignmentId }: { assignmentId: number }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [resume, setResume] = useState<File | null>(null);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Submitting application", {
-      assignmentId,
-      name,
-      email,
-      phone,
-      resume,
-    });
-    setIsOpen(false);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-          Ansök
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Ansök till uppdrag</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Namn</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="email">E-post</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="phone">Telefon</Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="resume">CV</Label>
-            <Input
-              id="resume"
-              type="file"
-              onChange={(e) => setResume(e.target.files?.[0] || null)}
-              required
-            />
-          </div>
-          <Button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Skicka ansökan
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function AssignmentCard({ assignment }: { assignment: Assignment }) {
+function AssignmentCard({
+  assignment,
+  isFavorite,
+  onToggleFavorite,
+}: {
+  assignment: Assignment;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
+}) {
   return (
     <Card className="overflow-hidden transition-shadow duration-300 hover:shadow-lg border border-gray-200">
       <CardHeader className="bg-gray-50 border-b border-gray-200">
@@ -205,8 +126,23 @@ function AssignmentCard({ assignment }: { assignment: Assignment }) {
           </p>
         </div>
       </CardContent>
-      <CardFooter className="bg-gray-50 border-t border-gray-200 p-4">
-        <ApplicationForm assignmentId={assignment.id} />
+      <CardFooter className="bg-gray-50 border-t border-gray-200 p-4 flex justify-between items-center">
+        <div className="flex gap-2">
+          <Link href={`/job/${assignment.id}`} passHref>
+            <Button variant="outline">Läs mer</Button>
+          </Link>
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            Ansök
+          </Button>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleFavorite}
+          className={isFavorite ? "text-red-500" : "text-gray-500"}
+        >
+          <Heart className={`h-5 w-5 ${isFavorite ? "fill-current" : ""}`} />
+        </Button>
       </CardFooter>
     </Card>
   );
@@ -214,6 +150,7 @@ function AssignmentCard({ assignment }: { assignment: Assignment }) {
 
 export default function Home() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [favorites, setFavorites] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -260,18 +197,8 @@ export default function Home() {
   ];
 
   const fetchAssignments = async (filters = {}) => {
-    // setIsLoading(true);
-    // setError(null);
-    // try {
-    //   await new Promise((resolve) => setTimeout(resolve, 1000));
-    //   setAssignments(mockAssignments);
-    // } catch (error) {
-    //   console.error("Error fetching assignments:", error);
-    //   setError("Ett fel uppstod vid hämtning av uppdrag");
-    // } finally {
-    //   setIsLoading(false);
-    // }
     setIsLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/job-requests");
       if (!res.ok) {
@@ -282,6 +209,7 @@ export default function Home() {
       setAssignments(data.content);
     } catch (error) {
       console.error("Error fetching assignments:", error);
+      setError("Ett fel uppstod vid hämtning av uppdrag");
     } finally {
       setIsLoading(false);
     }
@@ -289,6 +217,11 @@ export default function Home() {
 
   useEffect(() => {
     fetchAssignments();
+    // Load favorites from localStorage
+    const storedFavorites = localStorage.getItem("favorites");
+    if (storedFavorites) {
+      setFavorites(JSON.parse(storedFavorites));
+    }
   }, []);
 
   const handleSearch = (filters: any) => {
@@ -296,12 +229,32 @@ export default function Home() {
     fetchAssignments(filters);
   };
 
+  const toggleFavorite = (id: number) => {
+    setFavorites((prev) => {
+      const newFavorites = prev.includes(id)
+        ? prev.filter((favId) => favId !== id)
+        : [...prev, id];
+
+      // Save favorites to localStorage
+      localStorage.setItem("favorites", JSON.stringify(newFavorites));
+      return newFavorites;
+    });
+  };
+
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="container mx-auto p-4">
-        <h1 className="text-4xl font-bold mb-6 text-center text-gray-800 py-8">
-          Konsultuppdrag
-        </h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-4xl font-bold text-center text-gray-800">
+            Konsultuppdrag
+          </h1>
+          <Link href="/saved-assignments" passHref>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Heart className="h-5 w-5" />
+              Sparade uppdrag
+            </Button>
+          </Link>
+        </div>
         <SearchFilters onSearch={handleSearch} />
         {isLoading ? (
           <p className="text-center text-gray-600">Laddar uppdrag...</p>
@@ -310,7 +263,12 @@ export default function Home() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {assignments.map((assignment) => (
-              <AssignmentCard key={assignment.id} assignment={assignment} />
+              <AssignmentCard
+                key={assignment.id}
+                assignment={assignment}
+                isFavorite={favorites.includes(assignment.id)}
+                onToggleFavorite={() => toggleFavorite(assignment.id)}
+              />
             ))}
           </div>
         )}
