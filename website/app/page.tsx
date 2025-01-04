@@ -25,25 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getJobRequests } from "@/pages/api/job-requests";
-
-interface Assignment {
-  id: number;
-  systemId: string;
-  title: string;
-  startDate: string;
-  endDate: string;
-  locations: {
-    name: string;
-    city: string;
-    country: string;
-  }[];
-  hoursPerWeek: number;
-  level: string;
-  legalEntityClient: {
-    name: string;
-  };
-}
+import { getJobRequests, type Assignment } from "@/pages/api/job-requests";
 
 function SearchFilters({ onSearch }: { onSearch: (filters: any) => void }) {
   const [search, setSearch] = useState("");
@@ -218,48 +200,6 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const mockAssignments: Assignment[] = [
-    {
-      id: 1,
-      systemId: "JR-39240",
-      title: "Konsult fastighetsförvaltning",
-      startDate: "2025-01-07",
-      endDate: "2025-03-31",
-      locations: [
-        { name: "Stockholm, Sverige", city: "Stockholm", country: "Sverige" },
-      ],
-      hoursPerWeek: 40,
-      level: "SENIOR",
-      legalEntityClient: { name: "Täby kommun" },
-    },
-    {
-      id: 2,
-      systemId: "JR-39241",
-      title: "IT-projektledare",
-      startDate: "2025-02-01",
-      endDate: "2025-06-30",
-      locations: [
-        { name: "Göteborg, Sverige", city: "Göteborg", country: "Sverige" },
-      ],
-      hoursPerWeek: 38,
-      level: "MEDIOR",
-      legalEntityClient: { name: "Göteborgs Stad" },
-    },
-    {
-      id: 3,
-      systemId: "JR-39242",
-      title: "Frontend-utvecklare",
-      startDate: "2025-03-15",
-      endDate: "2025-09-15",
-      locations: [
-        { name: "Malmö, Sverige", city: "Malmö", country: "Sverige" },
-      ],
-      hoursPerWeek: 40,
-      level: "JUNIOR",
-      legalEntityClient: { name: "Malmö Stad" },
-    },
-  ];
-
   const fetchAssignments = async (filters = {}) => {
     // setIsLoading(true);
     // setError(null);
@@ -274,8 +214,8 @@ export default function Home() {
     // }
     setIsLoading(true);
     try {
-      const data = await getJobRequests();
-      setAssignments(data.content);
+      const data  = await getJobRequests();
+      setAssignments(data);
     } catch (error) {
       console.error("Error fetching assignments:", error);
     } finally {

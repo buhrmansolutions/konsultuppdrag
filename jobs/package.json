@@ -1,0 +1,25 @@
+{
+    "name": "jobs",
+    "version": "0.0.0",
+    "description": "Periodic jobs runner",
+    "main": "dist/index.js",
+    "type": "module",
+    "scripts": {
+        "build": "tsc",
+        "start": "node dist/index.js",
+        "dev": "tsx src/index.ts"
+    },
+    "dependencies": {
+        "db": "0.0.0",
+        "node-cron": "^3.0.3"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "@types/node-cron": "^3.0.11",
+        "nodemon": "^3.0.0",
+        "ts-node": "^10.9.0",
+        "tsx": "^4.19.2",
+        "typescript": "^5.0.0"
+    },
+    "packageManager": "yarn@4.6.0+sha512.5383cc12567a95f1d668fbe762dfe0075c595b4bfff433be478dbbe24e05251a8e8c3eb992a986667c1d53b6c3a9c85b8398c35a960587fbd9fa3a0915406728"
+}
