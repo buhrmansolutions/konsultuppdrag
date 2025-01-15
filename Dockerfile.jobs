@@ -1,0 +1,42 @@
+# syntax=docker.io/docker/dockerfile:1
+
+FROM --platform=linux/amd64 node:20-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+WORKDIR /app
+
+COPY ./website/package.json ./website/
+COPY ./jobs/package.json ./jobs/
+COPY ./db ./db
+
+COPY package.json yarn.lock* .yarnrc* ./
+
+RUN corepack enable && yarn install --immutable
+RUN rm -rf ./node_modules/db && cp -r ./db ./node_modules/db
+
+
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY  . .
+
+
+RUN corepack enable && yarn db:generate
+
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 jobrunner
+
+
+COPY --from=builder --chown=jobrunner:nodejs /app/jobs/ ./
+COPY --from=builder --chown=jobrunner:nodejs /app/node_modules ./node_modules
+
+USER jobrunner
+RUN chmod +x ./entrypoint.sh
+
+ENTRYPOINT [ "sh", "./entrypoint.sh" ]

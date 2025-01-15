@@ -19,24 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Heart } from "lucide-react";
-
-interface Assignment {
-  id: number;
-  systemId: string;
-  title: string;
-  startDate: string;
-  endDate: string;
-  locations: {
-    name: string;
-    city: string;
-    country: string;
-  }[];
-  hoursPerWeek: number;
-  level: string;
-  legalEntityClient: {
-    name: string;
-  };
-}
+import { Assignment, getJobRequests } from "@/pages/api/job-requests";
 
 function SearchFilters({ onSearch }: { onSearch: (filters: any) => void }) {
   const [search, setSearch] = useState("");
@@ -157,12 +140,12 @@ export default function Home() {
   const mockAssignments: Assignment[] = [
     {
       id: 1,
-      systemId: "JR-39240",
+      sourceId: "JR-39240",
       title: "Konsult fastighetsförvaltning",
-      startDate: "2025-01-07",
-      endDate: "2025-03-31",
+      startDate: new Date("2025-01-07"),
+      endDate: new Date("2025-03-31"),
       locations: [
-        { name: "Stockholm, Sverige", city: "Stockholm", country: "Sverige" },
+        { id: 1, name: "Stockholm, Sverige", city: "Stockholm", country: "Sverige" },
       ],
       hoursPerWeek: 40,
       level: "SENIOR",
@@ -170,12 +153,12 @@ export default function Home() {
     },
     {
       id: 2,
-      systemId: "JR-39241",
+      sourceId: "JR-39241",
       title: "IT-projektledare",
-      startDate: "2025-02-01",
-      endDate: "2025-06-30",
+      startDate: new Date("2025-02-01"),
+      endDate: new Date("2025-06-30"),
       locations: [
-        { name: "Göteborg, Sverige", city: "Göteborg", country: "Sverige" },
+        { id: 2, name: "Göteborg, Sverige", city: "Göteborg", country: "Sverige" },
       ],
       hoursPerWeek: 38,
       level: "MEDIOR",
@@ -183,12 +166,12 @@ export default function Home() {
     },
     {
       id: 3,
-      systemId: "JR-39242",
+      sourceId: "JR-39242",
       title: "Frontend-utvecklare",
-      startDate: "2025-03-15",
-      endDate: "2025-09-15",
+      startDate: new Date("2025-03-15"),
+      endDate: new Date("2025-09-15"),
       locations: [
-        { name: "Malmö, Sverige", city: "Malmö", country: "Sverige" },
+        { id: 3, name: "Malmö, Sverige", city: "Malmö", country: "Sverige" },
       ],
       hoursPerWeek: 40,
       level: "JUNIOR",
@@ -200,13 +183,9 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/job-requests");
-      if (!res.ok) {
-        throw new Error("Failed to fetch assignments");
-      }
-      const data = await res.json();
+      const data = await getJobRequests();
       console.log(data);
-      setAssignments(data.content);
+      setAssignments(data);
     } catch (error) {
       console.error("Error fetching assignments:", error);
       setError("Ett fel uppstod vid hämtning av uppdrag");
@@ -276,3 +255,4 @@ export default function Home() {
     </main>
   );
 }
+

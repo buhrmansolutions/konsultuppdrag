@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Assignment {
+  id           Int      @id @default(autoincrement())
+  sourceId     String
+  title        String
+  startDate    DateTime
+  endDate      DateTime
+  hoursPerWeek Int
+  level        String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relation to the LegalEntityClient
+  legalEntityClient   LegalEntityClient @relation(fields: [legalEntityClientId], references: [id])
+  legalEntityClientId Int
+
+  // Locations as a separate model with a many-to-many relationship
+  locations Location[]
+}
+
+model Location {
+  id      Int    @id @default(autoincrement())
+  name    String
+  city    String
+  country String
+
+  // Many-to-many relation with Assignment
+  assignments Assignment[]
+}
+
+model LegalEntityClient {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  assignments Assignment[]
+}
