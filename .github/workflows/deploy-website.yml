@@ -1,0 +1,49 @@
+name: Build and Deploy website to GCP Cloud Run
+
+on:
+  push:
+    branches:
+      - main # or your default branch
+  workflow_dispatch: # Allows manual triggering
+
+env:
+  PROJECT_ID: konsultuppdrag-446823 # TODO: update this
+  REGION: europe-north1 # TODO: update this if needed
+  SERVICE_NAME: konsultuppdrag-website # TODO: update this
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }} # Workload Identity Federation
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Authorize Docker push
+        run: gcloud auth configure-docker
+
+      - name: Build and Push Container
+        run: |-
+          docker build -t europe-north1-docker.pkg.dev/${{ env.PROJECT_ID }}/main/${{ env.SERVICE_NAME }}:${{ github.sha }} -f Dockerfile.website .
+          docker push europe-north1-docker.pkg.dev/${{ env.PROJECT_ID }}/main/${{ env.SERVICE_NAME }}:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        run: |-
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated
